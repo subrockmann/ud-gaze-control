@@ -4,6 +4,7 @@ import time
 import socket
 import json
 import cv2
+import numpy as np
 
 import logging as log
 from argparse import ArgumentParser
@@ -51,12 +52,21 @@ def get_args():
         required = False,
         type = float,
         default = 0.6,
-        help = "Probability threshold for model to identify the face, default = 0.6")    
+        help = "Probability threshold for model to identify the face, default = 0.6")   
+
+    parser.add_argument("-vf", "--visual_flag",
+        required = False,
+        type = str,
+        default = 0,
+        help = "Flag for visualizing the outputs of the intermediate models, default = 0")     
 
     args = parser.parse_args()
 
     return args
 
+
+
+    
 
 def main():
     args = get_args()
@@ -65,6 +75,9 @@ def main():
     #inputFile = "./bin/demo.mp4"
 
     frame_count = 0
+
+    focal_length = 950.0
+    scale = 50
 
     if inputFile.lower() == "cam":
         feed = InputFeeder('cam')
@@ -96,6 +109,17 @@ def main():
 
             key = cv2.waitKey(60)
             face_crop, face_coords, = fdm.predict(frame.copy())
+            print(face_coords)
+            
+            frame_h, frame_w = frame.shape[:2]
+
+            #bounding_box = face_coords * np.array([frame_w, frame_h, frame_w, frame_h])
+            #print(bounding_box)
+            (xmin, ymin, xmax, ymax) = face_coords
+            face_frame = frame[ymin:ymax, xmin:xmax]
+            center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
+            print(center_of_face)
+            
 
             # Check if face was detected
             #if type(face_crop) == int:
@@ -105,7 +129,13 @@ def main():
             #    continue
             if face_crop:
                 head_pose = hpm.predict(face_crop.copy())
-                print(head_pose)
+                (pitch, roll, yaw)= head_pose
+
+                #print(head_pose)
+                # visualize the axes of the HeadPoseEstimator results
+                if args.visual_flag == 1:
+                    hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+
             #print(face_coords)
             
 
