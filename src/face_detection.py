@@ -89,7 +89,7 @@ class FaceDetector:
 
         face_crop = image[y_min:y_max, x_min:x_max].copy()
 
-        return coordinates, face_crop
+        return face_crop, coordinates
 
 
     def check_model(self):
