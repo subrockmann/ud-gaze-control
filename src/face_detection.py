@@ -69,7 +69,7 @@ class FaceDetector:
         result = self.exec_net.infer(input_dict)
         #result = result['detection_out']
         #result = np.squeeze(result)
-        print(result)
+        #print(result)
         #print(result.shape)
 
         coordinates = self.preprocess_output(result)
@@ -89,7 +89,8 @@ class FaceDetector:
 
         face_crop = image[y_min:y_max, x_min:x_max].copy()
 
-        return face_crop, coordinates
+        #return face_crop, coordinates
+        return face_crop, (x_min, x_max, y_min, y_max)
 
 
     def check_model(self):
