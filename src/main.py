@@ -71,12 +71,12 @@ def main():
 
     else:
         if not os.path.isfile(inputFile):
-            print("Unable to find file: "+ inputFile)
+            log.error("Unable to find file: "+ inputFile)
             exit(1)
         feed = InputFeeder("video", inputFile)
-        
+        log.info("InputFeeder initialized")
     
-    print(args.facedetectionmodel)
+    #print(args.facedetectionmodel)
     # Create instances of the different models
     fdm = FaceDetector(args.facedetectionmodel, args.device, args.cpu_extension)
     fdm.load_model()

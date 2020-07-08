@@ -4,6 +4,7 @@ This has been provided just to give you an idea of how to structure your model c
 '''
 from openvino.inference_engine import IECore
 import cv2
+import logging as log
 
 class HeadPoseEstimator:
     '''
@@ -21,7 +22,7 @@ class HeadPoseEstimator:
             self.model = IECore().read_network(self.model_structure, self.model_weights)
         except Exception as e:
             raise ValueError("Could not Initialise the network. Have you enterred the correct model path?" + model_name)
-
+            log.error("Head Pose Estimation initialization failed", e)
         self.input_name=next(iter(self.model.inputs))
         self.input_shape=self.model.inputs[self.input_name].shape
         self.output_name=next(iter(self.model.outputs))
@@ -105,11 +106,11 @@ class HeadPoseEstimator:
                 unsupported_layers.append(l)
         
         if len(unsupported_layers) != 0:
+            log.warning("Unsupported layers found: {}".format(unsupported_layers))
+            log.warning("Check whether extensions are available to add to IECore.")
+            #sys.exit("Add necessary extension for given hardware")
             #print("Unsupported layers found: {}".format(unsupported_layers))
-            #print("Check whether extensions are available to add to IECore.")
             exit(1)
-
-        raise NotImplementedError
 
     def preprocess_input(self, image):
         '''
