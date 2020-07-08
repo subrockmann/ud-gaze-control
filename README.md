@@ -8,12 +8,27 @@ pip3 install -r requirements.txt
 
 source /opt/intel/openvino/bin/setupvars.sh
 
-Required models 
-Face detection model: https://docs.openvinotoolkit.org/latest/_models_intel_face_detection_adas_binary_0001_description_face_detection_adas_binary_0001.html
+## Required models 
+### Face detection model
+https://docs.openvinotoolkit.org/latest/_models_intel_face_detection_adas_binary_0001_description_face_detection_adas_binary_0001.html
 
 sudo ./downloader.py --name face-detection-adas-binary-0001 -o /models
 
-Head pose estimation model: https://docs.openvinotoolkit.org/latest/_models_intel_head_pose_estimation_adas_0001_description_head_pose_estimation_adas_0001.html
+### Head pose estimation model
+https://docs.openvinotoolkit.org/latest/_models_intel_head_pose_estimation_adas_0001_description_head_pose_estimation_adas_0001.html
+
+sudo ./downloader.py --name head-pose-estimation-adas-0001 -o /models
+
+### Facial landmark detection model
+https://docs.openvinotoolkit.org/latest/_models_intel_landmarks_regression_retail_0009_description_landmarks_regression_retail_0009.html
+
+sudo ./downloader.py --name landmarks-regression-retail-0009 -o /models
+
+### Gaze estimation model
+https://docs.openvinotoolkit.org/latest/_models_intel_gaze_estimation_adas_0002_description_gaze_estimation_adas_0002.html
+
+sudo ./downloader.py --name gaze-estimation-adas-0002 -o /models
+
 
 
 
