@@ -8,13 +8,22 @@ pip3 install -r requirements.txt
 
 source /opt/intel/openvino/bin/setupvars.sh
 
+Required models 
+Face detection model: https://docs.openvinotoolkit.org/latest/_models_intel_face_detection_adas_binary_0001_description_face_detection_adas_binary_0001.html
+
+sudo ./downloader.py --name face-detection-adas-binary-0001 -o /models
+
+Head pose estimation model: https://docs.openvinotoolkit.org/latest/_models_intel_head_pose_estimation_adas_0001_description_head_pose_estimation_adas_0001.html
+
+
+
 
 *TODO:* Explain the setup procedures to run your project. For instance, this can include your project directory structure, the models you need to download and where to place them etc. Also include details about how to install the dependencies your project requires.
 
 ## Demo
 *TODO:* Explain how to run a basic demo of your model.
 From inside the starter folder:
-python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001
 
 
 ## Documentation

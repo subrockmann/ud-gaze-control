@@ -11,6 +11,7 @@ from openvino.inference_engine import IECore  # used to load the IE python API
 
 from input_feeder import InputFeeder
 from face_detection import FaceDetector
+from head_pose_estimation import HeadPoseEstimator
 
 
 def get_args():
@@ -24,6 +25,11 @@ def get_args():
         required = True,
         type = str,
         help = "Path to .xml file of the face detection model")
+
+    parser.add_argument("-hp", "--headposemodel",
+        required = True,
+        type = str,
+        help = "Path to .xml file of the head pose estimation model")
 
     parser.add_argument("-i", "--input",
         required = True,
@@ -75,6 +81,9 @@ def main():
     fdm = FaceDetector(args.facedetectionmodel, args.device, args.cpu_extension)
     fdm.load_model()
 
+    hpm = HeadPoseEstimator(args.headposemodel, args.device, args.cpu_extension)
+    hpm.load_model()
+
 
 
     feed.load_data()
@@ -88,7 +97,17 @@ def main():
             key = cv2.waitKey(60)
             face_crop, face_coords, = fdm.predict(frame.copy())
 
-            print(face_coords)
+            # Check if face was detected
+            #if type(face_crop) == int:
+            #    print("Unable to detect face")
+                #if key == 27:
+                #    break
+            #    continue
+            if face_crop:
+                head_pose = hpm.predict(face_crop.copy())
+                print(head_pose)
+            #print(face_coords)
+            
 
 
     cv2.destroyAllWindows()
