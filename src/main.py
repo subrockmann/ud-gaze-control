@@ -13,6 +13,7 @@ from openvino.inference_engine import IECore  # used to load the IE python API
 from input_feeder import InputFeeder
 from face_detection import FaceDetector
 from head_pose_estimation import HeadPoseEstimator
+from facial_landmarks_detection import FacialLandmarksDetector
 
 
 def get_args():
@@ -31,6 +32,11 @@ def get_args():
         required = True,
         type = str,
         help = "Path to .xml file of the head pose estimation model")
+
+    parser.add_argument("-fl", "--faciallandmarksmodel",
+        required = True,
+        type = str,
+        help = "Path to .xml file of the facial landmark model")
 
     parser.add_argument("-i", "--input",
         required = True,
@@ -97,6 +103,9 @@ def main():
     hpm = HeadPoseEstimator(args.headposemodel, args.device, args.cpu_extension)
     hpm.load_model()
 
+    flm = FacialLandmarksDetector(args.faciallandmarksmodel, args.device, args.cpu_extension)
+    flm.load_model()
+
 
 
     feed.load_data()
@@ -109,7 +118,7 @@ def main():
 
             key = cv2.waitKey(60)
             face_crop, face_coords, = fdm.predict(frame.copy())
-            print(face_coords)
+            #print(face_coords)
             
             frame_h, frame_w = frame.shape[:2]
 
@@ -118,7 +127,7 @@ def main():
             (xmin, ymin, xmax, ymax) = face_coords
             face_frame = frame[ymin:ymax, xmin:xmax]
             center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
-            print(center_of_face)
+            print("Center of face " + str(center_of_face))
             
 
             # Check if face was detected
@@ -127,11 +136,16 @@ def main():
                 #if key == 27:
                 #    break
             #    continue
+
+            landmarks = flm.predict(frame.copy())
+            print(landmarks)
+
             if face_crop:
                 head_pose = hpm.predict(face_crop.copy())
                 (pitch, roll, yaw)= head_pose
-
                 #print(head_pose)
+                
+
                 # visualize the axes of the HeadPoseEstimator results
                 if args.visual_flag == 1:
                     hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
