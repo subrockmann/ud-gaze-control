@@ -5,17 +5,19 @@ This has been provided just to give you an idea of how to structure your model c
 from openvino.inference_engine import IECore
 import cv2
 import numpy as np
+import logging as log
 
-class FaceDetector:
+
+
+class GazeEstimator:
     '''
-    Class for the Face Detection Model.
+    Class for the Facial Landmarks Detection Model.
     '''
     #def __init__(self, model_name, device='CPU', extensions=None):
-    def __init__(self, model_name, device='CPU', extensions=None, threshold=0.60):
+    def __init__(self, model_name, device='CPU', extensions=None):
         self.model_weights=model_name+'.bin'
         self.model_structure=model_name+'.xml'
         self.device=device
-        self.threshold=threshold
 
         print(model_name)
 
@@ -23,7 +25,7 @@ class FaceDetector:
             self.model = IECore().read_network(self.model_structure, self.model_weights)
         except Exception as e:
             raise ValueError("Could not Initialise the network. Have you enterred the correct model path?" + model_name)
-
+            log.error("Head Pose Estimation initialization failed", e)
         self.input_name=next(iter(self.model.inputs))
         self.input_shape=self.model.inputs[self.input_name].shape
         self.output_name=next(iter(self.model.outputs))
@@ -32,7 +34,7 @@ class FaceDetector:
         print("Model initialized")
 
     #def load_model(self):
-    def load_model(self): #, device="CPU", cpu_extension=None):
+    def load_model(self): 
         '''
         Load the model given IR files.
         Defaults to CPU as device for use in the workspace.
@@ -44,7 +46,7 @@ class FaceDetector:
 
         # Read the IR as a IENetwork
         self.exec_net = self.core.load_network(network=self.model, device_name=self.device, num_requests=1)
-        print('FaceDetector Network loaded...')
+        print('GazeEstimatorNetwork loaded...')
 
         # Get the input layer
         self.input_blob = next(iter(self.exec_net.inputs))
@@ -52,40 +54,31 @@ class FaceDetector:
         #print(self.input_blob)
         return
 
-    def predict(self, image):
+    def predict(self, head_pose, left_eye_crop, right_eye_crop):
         '''
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-
-        p_frame = self.preprocess_input(image)
+        print("Left eye shape " + str(left_eye_crop.shape))
+        left_eye = self.preprocess_input(left_eye_crop)
+        right_eye = self.preprocess_input(right_eye_crop)
 
         '''
         Makes an asynchronous inference request, given an input image.
         '''
         #print(self.input_blob)
-        input_name = self.input_name
-        input_dict = {self.input_name: p_frame}
+
+        input_dict = {'head_pose_angles': head_pose, 'left_eye_image': left_eye, 'right_eye_image': right_eye}
 
         result = self.exec_net.infer(input_dict)
-        #result = result['detection_out']
-        #result = np.squeeze(result)
-        #print(result)
-        #print(result.shape)
 
-        coordinates = self.preprocess_output(result)
-        if (len(coordinates) == 0):
-            return 0, 0
+        print(result)
 
-        coordinates = coordinates[0]    # only use the first returned image
-        h=image.shape[0]
-        w=image.shape[1]
-        coordinates = coordinates* np.array([w, h, w, h])
-        coordinates = coordinates.astype(np.int32) # cast to integer
-        face_crop = image[coordinates[1]:coordinates[3], coordinates[0]:coordinates[2]]
+        vector = self.preprocess_output(result)
+        print(vector)
 
-        #return face_crop, coordinates
-        return face_crop, coordinates
+
+        return result #left_eye_crop, right_eye_crop, coordinates 
 
 
     def check_model(self):
@@ -102,11 +95,11 @@ class FaceDetector:
                 unsupported_layers.append(l)
         
         if len(unsupported_layers) != 0:
+            log.warning("Unsupported layers found: {}".format(unsupported_layers))
+            log.warning("Check whether extensions are available to add to IECore.")
+            #sys.exit("Add necessary extension for given hardware")
             #print("Unsupported layers found: {}".format(unsupported_layers))
-            #print("Check whether extensions are available to add to IECore.")
             exit(1)
-
-        raise NotImplementedError
 
     def preprocess_input(self, image):
         '''
@@ -117,34 +110,36 @@ class FaceDetector:
         
         # Preprocessing input
         n, c, h, w = self.input_shape
+
+        #if input_img:
         
         input_img=cv2.resize(input_img, (w, h), interpolation = cv2.INTER_AREA)
-        
+    
         # Change image from HWC to CHW
         input_img = input_img.transpose((2, 0, 1))
-        #input_img = input_img.reshape(1, 3, h, w)
+    
         input_img = input_img.reshape(n, c, h, w)
-        #input_img = input_img.reshape(1, *input_img.shape)
+
 
         return input_img 
+ 
 
     def preprocess_output(self, outputs):
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
-        :param outputs: Frame which needs to be merged with the contours
-        :return: coords values in form of list
+
         '''
-        coords = []
-        cnts = outputs[self.output_name][0][0]   
-        for cnt in cnts: 
-            conf = cnt[2]
-            if conf > self.threshold:
-                x_min = cnt[3]
-                x_max = cnt[4]
-                y_min = cnt[5]
-                y_max = cnt[6]
-                coords.append([x_min, x_max, y_min, y_max])
-        return coords
+        vector = outputs['gaze_vector'][0]
 
+        #width = int(frame.shape[1]) 
+        #height = int(frame.shape[0]) 
 
+        # coordinates of landmarks
+        #left_eye_x = int(landmarks[0] * width)
+        #left_eye_y = int(landmarks[1] * height)
+        #right_eye_x = int(landmarks[2] * width)
+        #right_eye_y = int(landmarks[3] * height)
+        #print(type(vector))
+
+        return vector

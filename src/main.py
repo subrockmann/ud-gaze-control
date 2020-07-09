@@ -14,6 +14,7 @@ from input_feeder import InputFeeder
 from face_detection import FaceDetector
 from head_pose_estimation import HeadPoseEstimator
 from facial_landmarks_detection import FacialLandmarksDetector
+from gaze_estimation import GazeEstimator
 
 
 def get_args():
@@ -37,6 +38,12 @@ def get_args():
         required = True,
         type = str,
         help = "Path to .xml file of the facial landmark model")
+
+    parser.add_argument("-ge", "--gazeestimationmodel",
+        required = True,
+        type = str,
+        help = "Path to .xml file of the gaze estimation model")
+
 
     parser.add_argument("-i", "--input",
         required = True,
@@ -106,6 +113,8 @@ def main():
     flm = FacialLandmarksDetector(args.faciallandmarksmodel, args.device, args.cpu_extension)
     flm.load_model()
 
+    gem = GazeEstimator(args.gazeestimationmodel, args.device, args.cpu_extension)
+    gem.load_model()
 
 
     feed.load_data()
@@ -117,9 +126,9 @@ def main():
             frame_count += 1
 
             key = cv2.waitKey(60)
-            face_crop, face_coords, = fdm.predict(frame.copy())
+            face_crop, face_coords = fdm.predict(frame.copy())
             #print(face_coords)
-            
+            print("Face crop shape: " + str(face_crop.shape))
             frame_h, frame_w = frame.shape[:2]
 
             #bounding_box = face_coords * np.array([frame_w, frame_h, frame_w, frame_h])
@@ -129,28 +138,37 @@ def main():
             center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
             print("Center of face " + str(center_of_face))
             
-
+            #try:
             # Check if face was detected
-            #if type(face_crop) == int:
-            #    print("Unable to detect face")
-                #if key == 27:
-                #    break
-            #    continue
+            if type(face_crop) == int:
+                print("Unable to detect face")
+                if key == 27:
+                    break
+                continue
 
-            landmarks = flm.predict(frame.copy())
-            print(landmarks)
+            left_eye_crop, right_eye_crop, landmarks = flm.predict(frame.copy())
+            print("Landmarks" +str(landmarks))
+            #print("Face crop shape: " + str(face_crop.shape))
 
-            if face_crop:
-                head_pose = hpm.predict(face_crop.copy())
-                (pitch, roll, yaw)= head_pose
-                #print(head_pose)
-                
+            #print("Head pose trial")
+            head_pose = hpm.predict(face_crop.copy())
+            print("Head pose: " + str(head_pose))
+            (pitch, roll, yaw)= head_pose
 
-                # visualize the axes of the HeadPoseEstimator results
-                if args.visual_flag == 1:
-                    hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
 
-            #print(face_coords)
+            
+            # Send inputs to GazeEstimator
+            gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
+            print(gaze_vector)
+
+            # visualize the axes of the HeadPoseEstimator results
+            if args.visual_flag == 1:
+                hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+            #except Exception as e:
+            #    print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
+            #continue
+
+            
             
 
 

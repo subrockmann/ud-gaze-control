@@ -4,6 +4,7 @@ This has been provided just to give you an idea of how to structure your model c
 '''
 from openvino.inference_engine import IECore
 import cv2
+import numpy as np
 import logging as log
 
 
@@ -69,36 +70,17 @@ class HeadPoseEstimator:
         input_dict = {self.input_name: p_frame}
 
         result = self.exec_net.infer(input_dict)
-        #result = result['detection_out']
-        #result = np.squeeze(result)
-        print(result)
-        #print(result.shape)
+        #print("Head pose output " + str(result))
 
-        coordinates = self.preprocess_output(result)
-
-        if (len(coordinates) == 0):
-            return 0, 0
-
-
-        coordinates = coordinates[0]    # only use the first returned image
-
-        # Crop the face from the original image
-        #[x_min, x_max, y_min, y_max]
-        x_min = int(coordinates[0] * image.shape[1])
-        x_max = int(coordinates[1] * image.shape[1])
-        y_min = int(coordinates[2] * image.shape[0])
-        y_max = int(coordinates[3] * image.shape[0])
-
-        face_crop = image[y_min:y_max, x_min:x_max].copy()
-
-        return face_crop, (x_min, x_max, y_min, y_max)
+        axes = self.preprocess_output(result)
+        return axes
 
 
     def check_model(self):
         '''
         TODO: Check if this implementation is working with self.plugin...
         '''
-        ### TODO: Check for supported layers ###
+
         supported_layers = self.core.query_network(network=self.model,
                                                      device_name=self.device)
         unsupported_layers = []
@@ -124,17 +106,30 @@ class HeadPoseEstimator:
         # Preprocessing input
         n, c, h, w = self.input_shape
 
-        if input_img:
-        
-            input_img=cv2.resize(input_img, (w, h), interpolation = cv2.INTER_AREA)
-        
-            # Change image from HWC to CHW
-            input_img = input_img.transpose((2, 0, 1))
-        
-            input_img = input_img.reshape(n, c, h, w)
+
+    
+        input_img=cv2.resize(input_img, (w, h), interpolation = cv2.INTER_AREA)
+    
+        # Change image from HWC to CHW
+        input_img = input_img.transpose((2, 0, 1))
+    
+        input_img = input_img.reshape(n, c, h, w)
 
 
         return input_img 
+
+    def preprocess_output(self, outputs):
+        '''
+        Before feeding the output of this model to the next model,
+        you might have to preprocess the output. This function is where you can do that.
+
+        '''
+        pitch = np.squeeze(outputs['angle_p_fc'])
+        roll = np.squeeze(outputs['angle_r_fc'])
+        yaw = np.squeeze(outputs['angle_y_fc'])
+        axes = np.array([yaw, pitch, roll])
+        return axes
+
 
 # Visualization of head pose estimation 
     # Code for draw_axes() and build_camera_matrix from https://knowledge.udacity.com/questions/171017
@@ -198,17 +193,3 @@ class HeadPoseEstimator:
 
     
 
-    def preprocess_output(self, outputs):
-        '''
-        Before feeding the output of this model to the next model,
-        you might have to preprocess the output. This function is where you can do that.
-
-        '''
-        pitch = np.squeeze(outputs['angle_p_fc'])
-        roll = np.squeeze(outputs['angle_r_fc'])
-        yaw = np.squeeze(outputs['angle_y_fc'])
-        axes = np.array([pitch, roll, yaw])
-
-
-
-        return axes

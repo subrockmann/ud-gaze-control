@@ -59,6 +59,9 @@ class FacialLandmarksDetector:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
+        radius = 5
+        padding_x = 15
+        padding_y = 15
 
         p_frame = self.preprocess_input(image)
 
@@ -71,30 +74,40 @@ class FacialLandmarksDetector:
 
         result = self.exec_net.infer(input_dict)
 
-        print(result)
-        #print(result.shape)
+        #print(result)
 
         coordinates = self.preprocess_output(result, image)
-        print(coordinates)
+   
 
         if (len(coordinates) == 0):
             return 0, 0
+        coordinates = coordinates[0]    # only use the first returned image
+        h=image.shape[0]
+        w=image.shape[1]
+        coordinates = coordinates* np.array([w, h, w, h])
+        coordinates = coordinates.astype(np.int32) # cast to integer
+        #print("Landmark coordinates "+ str(coordinates))
 
         (left_eye_x, left_eye_y, right_eye_x, right_eye_y) = coordinates
 
+        # coordinates for cropping 
+        left_eye_x_min = left_eye_x - padding_x
+        left_eye_x_max = left_eye_x + padding_x
+        left_eye_y_min = left_eye_y - padding_y
+        left_eye_y_max = left_eye_y + padding_y
+
+        right_eye_x_min = right_eye_x - padding_x
+        right_eye_x_max = right_eye_x + padding_x
+        right_eye_y_min = right_eye_y - padding_y
+        right_eye_y_max = right_eye_y + padding_y       
+
+        left_eye_crop = image[left_eye_y_min:left_eye_y_max, left_eye_x_min:left_eye_x_max].copy()
+        right_eye_crop = image[right_eye_y_min:right_eye_y_max, right_eye_x_min:right_eye_x_max].copy()
+        print(left_eye_crop.shape)
 
         #coordinates = coordinates[0]    # only use the first returned image
 
-        # Crop the face from the original image
-        #[x_min, x_max, y_min, y_max]
-        #x_min = int(coordinates[0] * image.shape[1])
-        #x_max = int(coordinates[1] * image.shape[1])
-        #y_min = int(coordinates[2] * image.shape[0])
-        #y_max = int(coordinates[3] * image.shape[0])
-
-        #face_crop = image[y_min:y_max, x_min:x_max].copy()
-
-        return coordinates #face_crop, (x_min, x_max, y_min, y_max)
+        return left_eye_crop, right_eye_crop, coordinates 
 
 
     def check_model(self):
@@ -146,20 +159,14 @@ class FacialLandmarksDetector:
         you might have to preprocess the output. This function is where you can do that.
 
         '''
-        landmarks = np.squeeze(outputs['95'])
 
-        width = int(frame.shape[1]) 
-        height = int(frame.shape[0]) 
 
-        radius = 5
-        padding_x = 15
-        padding_y = 15
+        landmarks = outputs[self.output_name][0]
 
         # coordinates of landmarks
-        left_eye_x = int(landmarks[0] * width)
-        left_eye_y = int(landmarks[1] * height)
-        right_eye_x = int(landmarks[2] * width)
-        right_eye_y = int(landmarks[3] * height)
+        left_eye_x = landmarks[0].tolist()[0][0]
+        left_eye_y = landmarks[1].tolist()[0][0]
+        right_eye_x = landmarks[2].tolist()[0][0]
+        right_eye_y = landmarks[3].tolist()[0][0]
 
-
-        return (left_eye_x, left_eye_y, right_eye_x, right_eye_y)
+        return left_eye_x, left_eye_y, right_eye_x, right_eye_y
