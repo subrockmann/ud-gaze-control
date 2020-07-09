@@ -72,13 +72,13 @@ class GazeEstimator:
 
         result = self.exec_net.infer(input_dict)
 
-        print(result)
+
 
         vector = self.preprocess_output(result)
-        print(vector)
+        #print(vector)
 
 
-        return result #left_eye_crop, right_eye_crop, coordinates 
+        return vector 
 
 
     def check_model(self):
@@ -131,15 +131,5 @@ class GazeEstimator:
 
         '''
         vector = outputs['gaze_vector'][0]
-
-        #width = int(frame.shape[1]) 
-        #height = int(frame.shape[0]) 
-
-        # coordinates of landmarks
-        #left_eye_x = int(landmarks[0] * width)
-        #left_eye_y = int(landmarks[1] * height)
-        #right_eye_x = int(landmarks[2] * width)
-        #right_eye_y = int(landmarks[3] * height)
-        #print(type(vector))
 
         return vector

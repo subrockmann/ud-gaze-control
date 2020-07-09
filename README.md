@@ -12,22 +12,22 @@ source /opt/intel/openvino/bin/setupvars.sh
 ### Face detection model
 https://docs.openvinotoolkit.org/latest/_models_intel_face_detection_adas_binary_0001_description_face_detection_adas_binary_0001.html
 
-sudo ./downloader.py --name face-detection-adas-binary-0001 -o /models
+sudo python3 /opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name face-detection-adas-binary-0001 -o ./models
 
 ### Head pose estimation model
 https://docs.openvinotoolkit.org/latest/_models_intel_head_pose_estimation_adas_0001_description_head_pose_estimation_adas_0001.html
 
-sudo ./downloader.py --name head-pose-estimation-adas-0001 -o /models
+sudo python3 /opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name head-pose-estimation-adas-0001 -o ./models
 
 ### Facial landmark detection model
 https://docs.openvinotoolkit.org/latest/_models_intel_landmarks_regression_retail_0009_description_landmarks_regression_retail_0009.html
 
-sudo ./downloader.py --name landmarks-regression-retail-0009 -o /models
+sudo python3 /opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name landmarks-regression-retail-0009 -o ./models
 
 ### Gaze estimation model
 https://docs.openvinotoolkit.org/latest/_models_intel_gaze_estimation_adas_0002_description_gaze_estimation_adas_0002.html
 
-sudo ./downloader.py --name gaze-estimation-adas-0002 -o /models
+sudo python3 /opt/intel/openvino/deployment_tools/tools/model_downloader/downloader.py --name gaze-estimation-adas-0002 -o ./models
 
 
 
@@ -38,7 +38,7 @@ sudo ./downloader.py --name gaze-estimation-adas-0002 -o /models
 ## Demo
 *TODO:* Explain how to run a basic demo of your model.
 From inside the starter folder:
-python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002
 
 
 ## Documentation

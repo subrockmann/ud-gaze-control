@@ -138,35 +138,37 @@ def main():
             center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
             print("Center of face " + str(center_of_face))
             
-            #try:
-            # Check if face was detected
-            if type(face_crop) == int:
-                print("Unable to detect face")
-                if key == 27:
-                    break
-                continue
+            try:
+                # Check if face was detected
+                if type(face_crop) == int:
+                    print("Unable to detect face")
+                    if key == 27:
+                        break
+                    continue
 
-            left_eye_crop, right_eye_crop, landmarks = flm.predict(frame.copy())
-            print("Landmarks" +str(landmarks))
-            #print("Face crop shape: " + str(face_crop.shape))
+                left_eye_crop, right_eye_crop, landmarks = flm.predict(frame.copy())
+                print("Landmarks" +str(landmarks))
+                #print("Face crop shape: " + str(face_crop.shape))
 
-            #print("Head pose trial")
-            head_pose = hpm.predict(face_crop.copy())
-            print("Head pose: " + str(head_pose))
-            (pitch, roll, yaw)= head_pose
+                #print("Head pose trial")
+                head_pose = hpm.predict(face_crop.copy())
+                print("Head pose: " + str(head_pose))
+                (pitch, roll, yaw)= head_pose
 
 
-            
-            # Send inputs to GazeEstimator
-            gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
-            print(gaze_vector)
+                
+                # Send inputs to GazeEstimator
+                gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
+                print(gaze_vector)
 
-            # visualize the axes of the HeadPoseEstimator results
-            if args.visual_flag == 1:
-                hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
-            #except Exception as e:
-            #    print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
-            #continue
+                # visualize the axes of the HeadPoseEstimator results
+                if args.visual_flag == 1:
+                    hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+            except Exception as e:
+                print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
+            continue
+
+            cv2.imshow('preview', frame)
 
             
             
