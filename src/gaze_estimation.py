@@ -11,7 +11,7 @@ import logging as log
 
 class GazeEstimator:
     '''
-    Class for the Facial Landmarks Detection Model.
+    Class for the Gaze Estimation Model.
     '''
     #def __init__(self, model_name, device='CPU', extensions=None):
     def __init__(self, model_name, device='CPU', extensions=None):
@@ -31,6 +31,7 @@ class GazeEstimator:
         self.output_name=next(iter(self.model.outputs))
         self.output_shape=self.model.outputs[self.output_name].shape
         print('Output name ' + self.output_name)
+        print('Input name ' + self.input_name)
         print("Model initialized")
 
     #def load_model(self):
@@ -51,7 +52,7 @@ class GazeEstimator:
         # Get the input layer
         self.input_blob = next(iter(self.exec_net.inputs))
         self.output_blob = next(iter(self.exec_net.outputs))
-        #print(self.input_blob)
+        print(self.input_blob)
         return
 
     def predict(self, head_pose, left_eye_crop, right_eye_crop):
@@ -66,7 +67,7 @@ class GazeEstimator:
         '''
         Makes an asynchronous inference request, given an input image.
         '''
-        #print(self.input_blob)
+
 
         input_dict = {'head_pose_angles': head_pose, 'left_eye_image': left_eye, 'right_eye_image': right_eye}
 
@@ -109,18 +110,13 @@ class GazeEstimator:
         input_img = image
         
         # Preprocessing input
-        n, c, h, w = self.input_shape
-
-        #if input_img:
-        
-        input_img=cv2.resize(input_img, (w, h), interpolation = cv2.INTER_AREA)
+ 
+        input_img=cv2.resize(input_img, (60, 60), interpolation = cv2.INTER_AREA)
     
         # Change image from HWC to CHW
         input_img = input_img.transpose((2, 0, 1))
-    
-        input_img = input_img.reshape(n, c, h, w)
-
-
+        input_img = input_img.reshape(1, *input_img.shape)
+        
         return input_img 
  
 
