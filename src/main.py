@@ -26,98 +26,126 @@ def get_args():
     '''
     parser = ArgumentParser("Run inference on an input video")
 
-
     parser.add_argument("-fd", "--facedetectionmodel",
         required = True,
         type = str,
-        help = "Path to .xml file of the face detection model")
+        help = "Path to .xml file of the face detection model"
+        )
 
     parser.add_argument("-hp", "--headposemodel",
         required = True,
         type = str,
-        help = "Path to .xml file of the head pose estimation model")
+        help = "Path to .xml file of the head pose estimation model"
+        )
 
     parser.add_argument("-fl", "--faciallandmarksmodel",
         required = True,
         type = str,
-        help = "Path to .xml file of the facial landmark model")
+        help = "Path to .xml file of the facial landmark model"
+        )
 
     parser.add_argument("-ge", "--gazeestimationmodel",
         required = True,
         type = str,
-        help = "Path to .xml file of the gaze estimation model")
-
+        help = "Path to .xml file of the gaze estimation model"
+        )
 
     parser.add_argument("-i", "--input",
         required = True,
         type = str,
-        help = "Path to video file or enter 'CAM' for webcam")
+        help = "Path to video file or enter 'CAM' for webcam"
+        )
 
     parser.add_argument("-d", "--device",
         required = False,
         default = "CPU",
         type = str,
-        help="Specify the target device to infer on: (CPU by default)")
+        help="Specify the target device to infer on: (CPU by default)"
+            "Options are: CPU, GPU, FPGA and MYRIAD"
+        )
 
     parser.add_argument("-l", "--cpu_extension",
         required = False,
         type = str,
-        help = "Path to CPU extension if any layers are unsupported with choosen hardware")
+        help = "Path to CPU extension if any layers are unsupported with choosen hardware"
+        )
 
     parser.add_argument("-p", "--probability_threshold",
         required = False,
         type = float,
         default = 0.6,
-        help = "Probability threshold for model to identify the face, default = 0.6")   
+        help = "Probability threshold for model to identify the face, default = 0.6"
+        )   
 
     parser.add_argument("-vf", "--visual_flag",
         required = False,
         type = str,
         default = 0,
-        help = "Flag for visualizing the outputs of the intermediate models, default = 0")     
+        help = "Flag for visualizing the outputs of the intermediate models, default = 0"
+        )    
+
+    parser.add_argument("-s", "--stats",
+        required = False,
+        type = str,
+        default = 1,
+        help = "Provide performance statistics, default = 0"
+        )
 
     args = parser.parse_args()
-
     return args
 
-def draw_bounding_box(frame, coords):
+def draw_bounding_box(frame, coords, colour=(0, 255, 0)):
     '''
     Draw bounding box
     '''
     viz_frame = frame.copy()
     cv2.rectangle(viz_frame, (coords[0], coords[1]), (coords[2], coords[3]),
-                      (0, 0, 0), 3)
+                      colour, 2)
     return viz_frame
 
 def visualize_landmark(frame, landmark, color = (255, 0, 0) ):
-
     '''
     Draw circle at landmark
     '''
-
     radius = 5
-    #color = (255, 0, 0) 
     thickness = 2
-
-    #x = landmark[0] + coords[0]
-    #y = landmark[1] + coords[1]
-
     viz_frame = frame.copy()
     cv2.circle(viz_frame, landmark, radius, color, thickness) 
     return viz_frame
 
 
 def visualize_head_pose(frame, pitch, roll, yaw):
+    '''
+    Visualize head pose as displayed text
+    '''
     viz_frame = frame.copy()
     cv2.putText(viz_frame,
-                "Pose Angles: pitch= {:.2f} , roll= {:.2f} , yaw= {:.2f}".format(
-                pitch, roll, yaw),
+                "head pose:",
                 (20, 40),
                 cv2.FONT_HERSHEY_COMPLEX,
-                1, (255, 0, 255), 2)
+                1, (0, 255, 0), 1)
+    cv2.putText(viz_frame,
+            "pitch= {:.2f} , roll= {:.2f} , yaw= {:.2f}".format(
+            pitch, roll, yaw),
+            (20, 80),
+            cv2.FONT_HERSHEY_COMPLEX,
+            1, (0, 255, 0), 1)
     return viz_frame
 
-
+def display_gaze(frame, gaze_vector):
+    viz_frame = frame.copy()
+    cv2.putText(viz_frame,
+                "gaze:",
+                (20, 120),
+                cv2.FONT_HERSHEY_COMPLEX,
+                1, (0, 255, 0), 1)
+    cv2.putText(viz_frame,
+            "x= {:.2f} , ry= {:.2f} , yawz= {:.2f}".format(
+            gaze_vector[0], gaze_vector[1], gaze_vector[2]),
+            (20, 160),
+            cv2.FONT_HERSHEY_COMPLEX,
+            1, (0, 255, 0), 1)
+    return viz_frame
 
 def visualize_gaze(frame, gaze_vector, landmarks):
             left_eye = (landmarks[0],landmarks[1])
@@ -134,7 +162,6 @@ def get_mouse_vector(gaze_vector, roll):
         """
         Create the vector for the mouse movement
         """
-
         cosv = math.cos(roll * math.pi / 180.0)
         sinv = math.sin(roll * math.pi / 180.0)
 
@@ -143,19 +170,15 @@ def get_mouse_vector(gaze_vector, roll):
         return newx, newy
 
     
-
 def main():
     args = get_args()
 
     inputFile = args.input
     #inputFile = "./bin/demo.mp4"
 
-
     mouse = MouseController("high", "fast")
 
-
     frame_count = 0
-
     focal_length = 950.0
     scale = 50
 
@@ -169,19 +192,30 @@ def main():
         feed = InputFeeder("video", inputFile)
         log.info("InputFeeder initialized")
     
+    if args.stats== 1:
+        start_time = time.time()
+
     #print(args.facedetectionmodel)
     # Create instances of the different models
     fdm = FaceDetector(args.facedetectionmodel, args.device, args.cpu_extension)
     fdm.load_model()
+    fdm.check_model()
 
     hpm = HeadPoseEstimator(args.headposemodel, args.device, args.cpu_extension)
     hpm.load_model()
+    hpm.check_model()
 
     flm = FacialLandmarksDetector(args.faciallandmarksmodel, args.device, args.cpu_extension)
     flm.load_model()
+    flm.check_model()
 
     gem = GazeEstimator(args.gazeestimationmodel, args.device, args.cpu_extension)
     gem.load_model()
+    gem.check_model()
+
+    if args.stats== 1:
+        duration = time.time() - start_time
+        print(f"Duration for loading and checking the models: {duration}")
 
 
     cv2.namedWindow('preview',cv2.WINDOW_NORMAL)
@@ -197,15 +231,14 @@ def main():
 
             key = cv2.waitKey(60)
             face_crop, face_coords = fdm.predict(frame.copy())
-            #print(face_coords)
-            print("Face crop shape: " + str(face_crop.shape))
+            #print("Face crop shape: " + str(face_crop.shape))
             frame_h, frame_w = frame.shape[:2]
 
 
             (xmin, ymin, xmax, ymax) = face_coords
             face_frame = frame[ymin:ymax, xmin:xmax]
             center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
-            print("Center of face " + str(center_of_face))
+            #print("Center of face " + str(center_of_face))
             
             #try:
             # Check if face was detected
@@ -241,21 +274,25 @@ def main():
             left_eye_viz = (landmarks_viz[0],landmarks_viz[1])
             right_eye_viz = (landmarks_viz[2],landmarks_viz[3])
 
+            third_eye_viz_x = (landmarks_viz[2]-landmarks_viz[0])/2 + landmarks_viz[0]
+            third_eye_viz_y = (landmarks_viz[3]-landmarks_viz[1])/2 + landmarks_viz[1]
+            third_eye_viz = (third_eye_viz_x, third_eye_viz_y)
+
+            #print(landmarks_viz[0], landmarks_viz[2], third_eye_viz_x)
 
             #print("Face crop shape: " + str(face_crop.shape))
 
-            #print("Head pose trial")
             head_pose = hpm.predict(face_crop.copy())
             print("Head pose: " + str(head_pose))
             (pitch, roll, yaw)= head_pose
-
-
             
             # Send inputs to GazeEstimator
             gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
-            print(gaze_vector)
+            frame = display_gaze(frame, gaze_vector)
+            #print(gaze_vector)
             frame = draw_bounding_box(frame, face_coords)
             #frame = hpm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+            frame = hpm.draw_axes(frame.copy(), third_eye_viz, yaw, pitch, roll, scale, focal_length)
 
             left_eye_frame = crop_coords_viz[0:4]
             right_eye_frame = crop_coords_viz[4:]

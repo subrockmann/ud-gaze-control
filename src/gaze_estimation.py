@@ -60,7 +60,6 @@ class GazeEstimator:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-        print("Left eye shape " + str(left_eye_crop.shape))
         left_eye = self.preprocess_input(left_eye_crop)
         right_eye = self.preprocess_input(right_eye_crop)
 
@@ -91,7 +90,7 @@ class GazeEstimator:
                                                      device_name=self.device)
         unsupported_layers = []
 
-        for l in self.network.layers.keys():
+        for l in self.model.layers.keys():
             if l not in supported_layers:
                 unsupported_layers.append(l)
         

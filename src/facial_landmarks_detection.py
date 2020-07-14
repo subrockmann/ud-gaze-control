@@ -46,7 +46,7 @@ class FacialLandmarksDetector:
 
         # Read the IR as a IENetwork
         self.exec_net = self.core.load_network(network=self.model, device_name=self.device, num_requests=1)
-        print('Network loaded...')
+        print('Facial Landmark Detection Network loaded...')
 
         # Get the input layer
         self.input_blob = next(iter(self.exec_net.inputs))
@@ -74,7 +74,7 @@ class FacialLandmarksDetector:
 
         result = self.exec_net.infer(input_dict)
 
-        print("Raw Landmarks: " + str(result))
+        #print("Raw Landmarks: " + str(result))
 
         coordinates = self.preprocess_output(result, image)
    
@@ -103,7 +103,7 @@ class FacialLandmarksDetector:
 
         left_eye_crop = image[left_eye_y_min:left_eye_y_max, left_eye_x_min:left_eye_x_max].copy()
         right_eye_crop = image[right_eye_y_min:right_eye_y_max, right_eye_x_min:right_eye_x_max].copy()
-        print(left_eye_crop.shape)
+        
 
         crop_coordinates = (left_eye_x_min, left_eye_y_min, left_eye_x_max, left_eye_y_max,
             right_eye_x_min, right_eye_y_min, right_eye_x_max, right_eye_y_max)
@@ -121,7 +121,7 @@ class FacialLandmarksDetector:
                                                      device_name=self.device)
         unsupported_layers = []
 
-        for l in self.network.layers.keys():
+        for l in self.model.layers.keys():
             if l not in supported_layers:
                 unsupported_layers.append(l)
         
@@ -164,7 +164,7 @@ class FacialLandmarksDetector:
 
 
         landmarks = outputs[self.output_name][0]
-        print("post landmarks" + str(landmarks))
+        #print("post landmarks" + str(landmarks))
 
         # coordinates of landmarks
         left_eye_x = landmarks[0].tolist()[0][0]
@@ -172,6 +172,6 @@ class FacialLandmarksDetector:
         right_eye_x = landmarks[2].tolist()[0][0]
         right_eye_y = landmarks[3].tolist()[0][0]
 
-        print(left_eye_x, left_eye_y, right_eye_x, right_eye_y)
+        #print(left_eye_x, left_eye_y, right_eye_x, right_eye_y)
 
         return left_eye_x, left_eye_y, right_eye_x, right_eye_y

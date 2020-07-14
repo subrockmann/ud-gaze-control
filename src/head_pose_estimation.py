@@ -86,7 +86,7 @@ class HeadPoseEstimator:
                                                      device_name=self.device)
         unsupported_layers = []
 
-        for l in self.network.layers.keys():
+        for l in self.model.layers.keys():
             if l not in supported_layers:
                 unsupported_layers.append(l)
         

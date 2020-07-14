@@ -97,7 +97,7 @@ class FaceDetector:
                                                      device_name=self.device)
         unsupported_layers = []
 
-        for l in self.network.layers.keys():
+        for l in self.model.layers.keys():
             if l not in supported_layers:
                 unsupported_layers.append(l)
         
@@ -106,7 +106,6 @@ class FaceDetector:
             #print("Check whether extensions are available to add to IECore.")
             exit(1)
 
-        raise NotImplementedError
 
     def preprocess_input(self, image):
         '''
