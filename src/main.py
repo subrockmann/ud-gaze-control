@@ -5,12 +5,15 @@ import socket
 import json
 import cv2
 import numpy as np
+import math
 
 import logging as log
 from argparse import ArgumentParser
 from openvino.inference_engine import IECore  # used to load the IE python API
+import pyautogui
 
 from input_feeder import InputFeeder
+from mouse_controller import MouseController
 from face_detection import FaceDetector
 from head_pose_estimation import HeadPoseEstimator
 from facial_landmarks_detection import FacialLandmarksDetector
@@ -104,6 +107,18 @@ def visualize_landmark(frame, landmark, color = (255, 0, 0) ):
     return viz_frame
 
 
+def visualize_head_pose(frame, pitch, roll, yaw):
+    viz_frame = frame.copy()
+    cv2.putText(viz_frame,
+                "Pose Angles: pitch= {:.2f} , roll= {:.2f} , yaw= {:.2f}".format(
+                pitch, roll, yaw),
+                (20, 40),
+                cv2.FONT_HERSHEY_COMPLEX,
+                1, (255, 0, 255), 2)
+    return viz_frame
+
+
+
 def visualize_gaze(frame, gaze_vector, landmarks):
             left_eye = (landmarks[0],landmarks[1])
             right_eye = (landmarks[2],landmarks[3])
@@ -114,6 +129,19 @@ def visualize_gaze(frame, gaze_vector, landmarks):
             viz_frame = cv2.arrowedLine(viz_frame, right_eye, (int(right_eye[0]+x*200), int(right_eye[1]-y*200)), (0, 120, 20), 2)
             return viz_frame
 
+
+def get_mouse_vector(gaze_vector, roll):
+        """
+        Create the vector for the mouse movement
+        """
+
+        cosv = math.cos(roll * math.pi / 180.0)
+        sinv = math.sin(roll * math.pi / 180.0)
+
+        newx = gaze_vector[0] * cosv + gaze_vector[1] * sinv
+        newy = -gaze_vector[0] * sinv + gaze_vector[1] * cosv
+        return newx, newy
+
     
 
 def main():
@@ -121,6 +149,10 @@ def main():
 
     inputFile = args.input
     #inputFile = "./bin/demo.mp4"
+
+
+    mouse = MouseController("high", "fast")
+
 
     frame_count = 0
 
@@ -233,6 +265,10 @@ def main():
             frame = visualize_landmark(frame, left_eye_viz)
             frame = visualize_landmark(frame, right_eye_viz, color = (0, 0, 255) )
 
+            frame = visualize_head_pose(frame, pitch, roll, yaw)
+
+
+
             frame = visualize_gaze(frame, gaze_vector, landmarks_viz)
             # visualize the axes of the HeadPoseEstimator results
             if args.visual_flag == 1:
@@ -241,12 +277,18 @@ def main():
             #    print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
             #continue
 
+
+            mouse_x, mouse_y = get_mouse_vector(gaze_vector, roll)
+
+            #if frame_count % 2 == 0:
+            print("Mouse vector:" + str(mouse_x) + " - " + str(mouse_y))
+            mouse.move(mouse_x, mouse_y)
+            currentMouseX, currentMouseY = pyautogui.position()
+            print("Mouse coordinates: " + str(currentMouseX)+ ", " + str(currentMouseY))
+
             cv2.imshow('preview', frame)
             cv2.imshow('left eye', left_eye_crop)
             cv2.imshow('right eye', right_eye_crop)
-
-            
-            
 
 
     cv2.destroyAllWindows()
