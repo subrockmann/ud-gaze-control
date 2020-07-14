@@ -86,6 +86,24 @@ def draw_bounding_box(frame, coords):
                       (0, 0, 0), 3)
     return viz_frame
 
+def visualize_landmark(frame, landmark, color = (255, 0, 0) ):
+
+    '''
+    Draw circle at landmark
+    '''
+
+    radius = 5
+    #color = (255, 0, 0) 
+    thickness = 2
+
+    #x = landmark[0] + coords[0]
+    #y = landmark[1] + coords[1]
+
+    viz_frame = frame.copy()
+    cv2.circle(viz_frame, landmark, radius, color, thickness) 
+    return viz_frame
+
+
 def visualize_gaze(frame, gaze_vector, landmarks):
             left_eye = (landmarks[0],landmarks[1])
             right_eye = (landmarks[2],landmarks[3])
@@ -151,8 +169,7 @@ def main():
             print("Face crop shape: " + str(face_crop.shape))
             frame_h, frame_w = frame.shape[:2]
 
-            #bounding_box = face_coords * np.array([frame_w, frame_h, frame_w, frame_h])
-            #print(bounding_box)
+
             (xmin, ymin, xmax, ymax) = face_coords
             face_frame = frame[ymin:ymax, xmin:xmax]
             center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
@@ -166,8 +183,33 @@ def main():
                     break
                 continue
 
-            left_eye_crop, right_eye_crop, landmarks = flm.predict(frame.copy())
+            left_eye_crop, right_eye_crop, landmarks, crop_coords = flm.predict(face_crop.copy())
             print("Landmarks" +str(landmarks))
+            left_eye = (landmarks[0],landmarks[1])
+            right_eye = (landmarks[2],landmarks[3])
+
+
+            # Landmark position based on complete frame
+            landmarks_viz = landmarks
+            landmarks_viz[0] = landmarks_viz[0] + xmin
+            landmarks_viz[1] = landmarks_viz[1] + ymin
+            landmarks_viz[2] = landmarks_viz[2] + xmin
+            landmarks_viz[3] = landmarks_viz[3] + ymin
+
+            crop_coords_viz = (crop_coords[0] + xmin,
+                crop_coords[1] + ymin,
+                crop_coords[2] + xmin,
+                crop_coords[3] + ymin,
+                crop_coords[4] + xmin,
+                crop_coords[5] + ymin,
+                crop_coords[6] + xmin,
+                crop_coords[7] + ymin
+                )
+
+            left_eye_viz = (landmarks_viz[0],landmarks_viz[1])
+            right_eye_viz = (landmarks_viz[2],landmarks_viz[3])
+
+
             #print("Face crop shape: " + str(face_crop.shape))
 
             #print("Head pose trial")
@@ -181,9 +223,17 @@ def main():
             gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
             print(gaze_vector)
             frame = draw_bounding_box(frame, face_coords)
-            frame = hpm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+            #frame = hpm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
 
-            frame = visualize_gaze(frame, gaze_vector, landmarks)
+            left_eye_frame = crop_coords_viz[0:4]
+            right_eye_frame = crop_coords_viz[4:]
+            frame = draw_bounding_box(frame, left_eye_frame)
+            frame = draw_bounding_box(frame, right_eye_frame)
+
+            frame = visualize_landmark(frame, left_eye_viz)
+            frame = visualize_landmark(frame, right_eye_viz, color = (0, 0, 255) )
+
+            frame = visualize_gaze(frame, gaze_vector, landmarks_viz)
             # visualize the axes of the HeadPoseEstimator results
             if args.visual_flag == 1:
                 hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
@@ -192,6 +242,8 @@ def main():
             #continue
 
             cv2.imshow('preview', frame)
+            cv2.imshow('left eye', left_eye_crop)
+            cv2.imshow('right eye', right_eye_crop)
 
             
             

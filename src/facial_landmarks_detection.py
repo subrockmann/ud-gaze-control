@@ -74,19 +74,19 @@ class FacialLandmarksDetector:
 
         result = self.exec_net.infer(input_dict)
 
-        #print(result)
+        print("Raw Landmarks: " + str(result))
 
         coordinates = self.preprocess_output(result, image)
    
 
         if (len(coordinates) == 0):
             return 0, 0
-        coordinates = coordinates[0]    # only use the first returned image
+        
         h=image.shape[0]
         w=image.shape[1]
         coordinates = coordinates* np.array([w, h, w, h])
         coordinates = coordinates.astype(np.int32) # cast to integer
-        #print("Landmark coordinates "+ str(coordinates))
+        print("Landmark coordinates "+ str(coordinates))
 
         (left_eye_x, left_eye_y, right_eye_x, right_eye_y) = coordinates
 
@@ -105,9 +105,11 @@ class FacialLandmarksDetector:
         right_eye_crop = image[right_eye_y_min:right_eye_y_max, right_eye_x_min:right_eye_x_max].copy()
         print(left_eye_crop.shape)
 
-        #coordinates = coordinates[0]    # only use the first returned image
+        crop_coordinates = (left_eye_x_min, left_eye_y_min, left_eye_x_max, left_eye_y_max,
+            right_eye_x_min, right_eye_y_min, right_eye_x_max, right_eye_y_max)
+        
 
-        return left_eye_crop, right_eye_crop, coordinates 
+        return left_eye_crop, right_eye_crop, coordinates, crop_coordinates 
 
 
     def check_model(self):
@@ -162,11 +164,14 @@ class FacialLandmarksDetector:
 
 
         landmarks = outputs[self.output_name][0]
+        print("post landmarks" + str(landmarks))
 
         # coordinates of landmarks
         left_eye_x = landmarks[0].tolist()[0][0]
         left_eye_y = landmarks[1].tolist()[0][0]
         right_eye_x = landmarks[2].tolist()[0][0]
         right_eye_y = landmarks[3].tolist()[0][0]
+
+        print(left_eye_x, left_eye_y, right_eye_x, right_eye_y)
 
         return left_eye_x, left_eye_y, right_eye_x, right_eye_y
