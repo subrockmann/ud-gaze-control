@@ -60,13 +60,8 @@ class HeadPoseEstimator:
         TODO: You will need to complete this method.
         This method is meant for running predictions on the input image.
         '''
-
         p_frame = self.preprocess_input(image)
 
-        '''
-        Makes an asynchronous inference request, given an input image.
-        '''
-        #print(self.input_blob)
         input_name = self.input_name
         input_dict = {self.input_name: p_frame}
 
@@ -107,15 +102,11 @@ class HeadPoseEstimator:
         # Preprocessing input
         n, c, h, w = self.input_shape
 
-
-    
         input_img=cv2.resize(input_img, (w, h), interpolation = cv2.INTER_AREA)
     
         # Change image from HWC to CHW
         input_img = input_img.transpose((2, 0, 1))
-    
         input_img = input_img.reshape(n, c, h, w)
-
 
         return input_img 
 
@@ -123,7 +114,6 @@ class HeadPoseEstimator:
         '''
         Before feeding the output of this model to the next model,
         you might have to preprocess the output. This function is where you can do that.
-
         '''
         pitch = np.squeeze(outputs['angle_p_fc'])
         roll = np.squeeze(outputs['angle_r_fc'])
@@ -132,7 +122,7 @@ class HeadPoseEstimator:
         return axes
 
 
-# Visualization of head pose estimation 
+    # Visualization of head pose estimation 
     # Code for draw_axes() and build_camera_matrix from https://knowledge.udacity.com/questions/171017
     def draw_axes(self, frame, center_of_face, yaw, pitch, roll, scale, focal_length):
         yaw *= np.pi / 180.0
@@ -190,7 +180,3 @@ class HeadPoseEstimator:
         camera_matrix[1][2] = cy
         camera_matrix[2][2] = 1
         return camera_matrix        
-
-
-    
-

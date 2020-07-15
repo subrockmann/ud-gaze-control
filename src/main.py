@@ -79,7 +79,7 @@ def get_args():
 
     parser.add_argument("-vf", "--visual_flag",
         required = False,
-        type = str,
+        type = int,
         default = 0,
         help = "Flag for visualizing the outputs of the intermediate models, default = 0"
         )    
@@ -114,7 +114,7 @@ def visualize_landmark(frame, landmark, color = (255, 0, 0) ):
     return viz_frame
 
 
-def visualize_head_pose(frame, pitch, roll, yaw):
+def display_head_pose(frame, pitch, roll, yaw):
     '''
     Visualize head pose as displayed text
     '''
@@ -140,7 +140,7 @@ def display_gaze(frame, gaze_vector):
                 cv2.FONT_HERSHEY_COMPLEX,
                 1, (0, 255, 0), 1)
     cv2.putText(viz_frame,
-            "x= {:.2f} , ry= {:.2f} , yawz= {:.2f}".format(
+            "x= {:.2f} , y= {:.2f} , z= {:.2f}".format(
             gaze_vector[0], gaze_vector[1], gaze_vector[2]),
             (20, 160),
             cv2.FONT_HERSHEY_COMPLEX,
@@ -182,6 +182,7 @@ def main():
     focal_length = 950.0
     scale = 50
 
+    print(f"Visual flag: {args.visual_flag}")
     if inputFile.lower() == "cam":
         feed = InputFeeder('cam')
 
@@ -193,6 +194,7 @@ def main():
         log.info("InputFeeder initialized")
     
     if args.stats== 1:
+        print("Running statistics...")
         start_time = time.time()
 
     #print(args.facedetectionmodel)
@@ -214,9 +216,8 @@ def main():
     gem.check_model()
 
     if args.stats== 1:
-        duration = time.time() - start_time
-        print(f"Duration for loading and checking the models: {duration}")
-
+        duration_loading = time.time() - start_time
+        print(f"Duration for loading and checking the models: {duration_loading}")
 
     cv2.namedWindow('preview',cv2.WINDOW_NORMAL)
     cv2.resizeWindow('preview', 600,600)
@@ -228,110 +229,104 @@ def main():
         
         if frame is not None:
             frame_count += 1
-
             key = cv2.waitKey(60)
+
+            # Run face detection
             face_crop, face_coords = fdm.predict(frame.copy())
             #print("Face crop shape: " + str(face_crop.shape))
             frame_h, frame_w = frame.shape[:2]
-
-
             (xmin, ymin, xmax, ymax) = face_coords
             face_frame = frame[ymin:ymax, xmin:xmax]
-            center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
+            #center_of_face = (xmin + face_frame.shape[1] / 2, ymin + face_frame.shape[0] / 2, 0) # 0 for colour channel
             #print("Center of face " + str(center_of_face))
             
-            #try:
-            # Check if face was detected
-            if type(face_crop) == int:
-                print("Unable to detect face")
-                if key == 27:
-                    break
-                continue
+            try:
+                # Check if face was detected
+                if type(face_coords)== int:
+                    print("Unable to detect face")
+                    if key == 27:
+                        break
+                    continue
 
-            left_eye_crop, right_eye_crop, landmarks, crop_coords = flm.predict(face_crop.copy())
-            print("Landmarks" +str(landmarks))
-            left_eye = (landmarks[0],landmarks[1])
-            right_eye = (landmarks[2],landmarks[3])
+                # Facial landmark detection
+                left_eye_crop, right_eye_crop, landmarks, crop_coords = flm.predict(face_crop.copy())
+                print("Landmarks" +str(landmarks))
+                left_eye = (landmarks[0],landmarks[1])
+                right_eye = (landmarks[2],landmarks[3])
 
+                # Landmark position based on complete frame
+                landmarks_viz = landmarks
+                landmarks_viz[0] = landmarks_viz[0] + xmin
+                landmarks_viz[1] = landmarks_viz[1] + ymin
+                landmarks_viz[2] = landmarks_viz[2] + xmin
+                landmarks_viz[3] = landmarks_viz[3] + ymin
 
-            # Landmark position based on complete frame
-            landmarks_viz = landmarks
-            landmarks_viz[0] = landmarks_viz[0] + xmin
-            landmarks_viz[1] = landmarks_viz[1] + ymin
-            landmarks_viz[2] = landmarks_viz[2] + xmin
-            landmarks_viz[3] = landmarks_viz[3] + ymin
+                crop_coords_viz = (crop_coords[0] + xmin,
+                    crop_coords[1] + ymin,
+                    crop_coords[2] + xmin,
+                    crop_coords[3] + ymin,
+                    crop_coords[4] + xmin,
+                    crop_coords[5] + ymin,
+                    crop_coords[6] + xmin,
+                    crop_coords[7] + ymin)
 
-            crop_coords_viz = (crop_coords[0] + xmin,
-                crop_coords[1] + ymin,
-                crop_coords[2] + xmin,
-                crop_coords[3] + ymin,
-                crop_coords[4] + xmin,
-                crop_coords[5] + ymin,
-                crop_coords[6] + xmin,
-                crop_coords[7] + ymin
-                )
+                left_eye_viz = (landmarks_viz[0],landmarks_viz[1])
+                right_eye_viz = (landmarks_viz[2],landmarks_viz[3])
 
-            left_eye_viz = (landmarks_viz[0],landmarks_viz[1])
-            right_eye_viz = (landmarks_viz[2],landmarks_viz[3])
+                third_eye_viz_x = (landmarks_viz[2]-landmarks_viz[0])/2 + landmarks_viz[0]
+                third_eye_viz_y = (landmarks_viz[3]-landmarks_viz[1])/2 + landmarks_viz[1]
+                third_eye_viz = (third_eye_viz_x, third_eye_viz_y)
+                #print(landmarks_viz[0], landmarks_viz[2], third_eye_viz_x)
 
-            third_eye_viz_x = (landmarks_viz[2]-landmarks_viz[0])/2 + landmarks_viz[0]
-            third_eye_viz_y = (landmarks_viz[3]-landmarks_viz[1])/2 + landmarks_viz[1]
-            third_eye_viz = (third_eye_viz_x, third_eye_viz_y)
+                # Head pose estimation
+                head_pose = hpm.predict(face_crop.copy())
+                print("Head pose: " + str(head_pose))
+                (yaw, pitch, roll)= head_pose
+                frame = display_head_pose(frame, pitch, roll, yaw)
+                
+                # Send inputs to GazeEstimator
+                gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
+                #print(gaze_vector)
+                frame = display_gaze(frame, gaze_vector)
 
-            #print(landmarks_viz[0], landmarks_viz[2], third_eye_viz_x)
+                # Control the mouse
+                if frame_count % 2 == 0:
+                    mouse_x, mouse_y = get_mouse_vector(gaze_vector, roll)
+                    print("Mouse vector:" + str(mouse_x) + " - " + str(mouse_y))
+                    mouse.move(mouse_x, mouse_y)
+                    currentMouseX, currentMouseY = pyautogui.position()
+                    print("Mouse coordinates: " + str(currentMouseX)+ ", " + str(currentMouseY))
 
-            #print("Face crop shape: " + str(face_crop.shape))
+                if args.visual_flag == 1:
 
-            head_pose = hpm.predict(face_crop.copy())
-            print("Head pose: " + str(head_pose))
-            (pitch, roll, yaw)= head_pose
-            
-            # Send inputs to GazeEstimator
-            gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
-            frame = display_gaze(frame, gaze_vector)
-            #print(gaze_vector)
-            frame = draw_bounding_box(frame, face_coords)
-            #frame = hpm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
-            frame = hpm.draw_axes(frame.copy(), third_eye_viz, yaw, pitch, roll, scale, focal_length)
+                    frame = draw_bounding_box(frame, face_coords)
 
-            left_eye_frame = crop_coords_viz[0:4]
-            right_eye_frame = crop_coords_viz[4:]
-            frame = draw_bounding_box(frame, left_eye_frame)
-            frame = draw_bounding_box(frame, right_eye_frame)
+                    left_eye_frame = crop_coords_viz[0:4]
+                    right_eye_frame = crop_coords_viz[4:]
+                    frame = draw_bounding_box(frame, left_eye_frame)
+                    frame = draw_bounding_box(frame, right_eye_frame)
 
-            frame = visualize_landmark(frame, left_eye_viz)
-            frame = visualize_landmark(frame, right_eye_viz, color = (0, 0, 255) )
+                    frame = visualize_landmark(frame, left_eye_viz)
+                    frame = visualize_landmark(frame, right_eye_viz, color = (0, 0, 255) )
 
-            frame = visualize_head_pose(frame, pitch, roll, yaw)
+                    frame = visualize_gaze(frame, gaze_vector, landmarks_viz)
 
+                    # visualize the axes of the HeadPoseEstimator results
+                    #frame = hpm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
+                    frame = hpm.draw_axes(frame.copy(), third_eye_viz, yaw, pitch, roll, scale, focal_length)
+                    #hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
 
+                cv2.imshow('preview', frame)
+                cv2.imshow('left eye', left_eye_crop)
+                cv2.imshow('right eye', right_eye_crop)
 
-            frame = visualize_gaze(frame, gaze_vector, landmarks_viz)
-            # visualize the axes of the HeadPoseEstimator results
-            if args.visual_flag == 1:
-                hdm.draw_axes(frame.copy(), center_of_face, yaw, pitch, roll, scale, focal_length)
-            #except Exception as e:
-            #    print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
-            #continue
-
-
-            mouse_x, mouse_y = get_mouse_vector(gaze_vector, roll)
-
-            #if frame_count % 2 == 0:
-            print("Mouse vector:" + str(mouse_x) + " - " + str(mouse_y))
-            mouse.move(mouse_x, mouse_y)
-            currentMouseX, currentMouseY = pyautogui.position()
-            print("Mouse coordinates: " + str(currentMouseX)+ ", " + str(currentMouseY))
-
-            cv2.imshow('preview', frame)
-            cv2.imshow('left eye', left_eye_crop)
-            cv2.imshow('right eye', right_eye_crop)
-
+            except Exception as e:
+                print("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
+                log.error("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
+            continue
 
     cv2.destroyAllWindows()
     feed.close()
-
-
 
 if __name__ == "__main__":
     main()

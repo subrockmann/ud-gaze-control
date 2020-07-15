@@ -10,19 +10,20 @@ class FaceDetector:
     '''
     Class for the Face Detection Model.
     '''
-    #def __init__(self, model_name, device='CPU', extensions=None):
+
     def __init__(self, model_name, device='CPU', extensions=None, threshold=0.60):
         self.model_weights=model_name+'.bin'
         self.model_structure=model_name+'.xml'
         self.device=device
         self.threshold=threshold
 
-        print(model_name)
+        #print(model_name)
 
         try:
             self.model = IECore().read_network(self.model_structure, self.model_weights)
         except Exception as e:
             raise ValueError("Could not Initialise the network. Have you enterred the correct model path?" + model_name)
+            log.error("Face detection initialization failed", e)
 
         self.input_name=next(iter(self.model.inputs))
         self.input_shape=self.model.inputs[self.input_name].shape
@@ -75,7 +76,7 @@ class FaceDetector:
 
         coordinates = self.preprocess_output(result)
         if (len(coordinates) == 0):
-            return 0, 0
+            return 0
 
         coordinates = coordinates[0]    # only use the first returned image
         h=image.shape[0]
@@ -84,7 +85,6 @@ class FaceDetector:
         coordinates = coordinates.astype(np.int32) # cast to integer
         face_crop = image[coordinates[1]:coordinates[3], coordinates[0]:coordinates[2]]
 
-        #return face_crop, coordinates
         return face_crop, coordinates
 
 
