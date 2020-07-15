@@ -87,7 +87,7 @@ def get_args():
 
     parser.add_argument("-s", "--stats",
         required = False,
-        type = str,
+        type = int,
         default = 0,
         help = "Provide performance statistics, default = 0"
         )
@@ -227,7 +227,7 @@ def main():
     gem.load_model()
     gem.check_model()
 
-    if args.stats== 1:
+    if args.stats==1:
         duration_loading = time.time() - start_time
         print(f"Duration for loading and checking the models: {duration_loading}")
         log.info(f"Duration for loading and checking the models: {duration_loading}")
@@ -244,8 +244,8 @@ def main():
             frame_count += 1
             key = cv2.waitKey(60)
 
-        if args.stats== 1:
-            start_time = time.time()
+            if args.stats== 1:
+                start_time = time.time()
 
             # Run face detection
             face_crop, face_coords = fdm.predict(frame.copy())
@@ -346,8 +346,9 @@ def main():
                 log.error("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
             continue
 
-    if args.stats== 1:
+    if args.stats==1:
         avg_inference_time = sum(inference_times)/len(inference_times)
+        print("Average inference time: " + str(avg_inference_time))
         log.info("Average inference time: " + str(avg_inference_time))
     cv2.destroyAllWindows()
     feed.close()
