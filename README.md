@@ -61,9 +61,16 @@ From inside the gaze-control folder you can run the following listed commands ac
 
 * Inference on video file located at bin/demo.mp4 using CPU and precision FP32
 ```
-
-python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002 -vf 1
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002 -vf 1 -s 1
 ```
+
+* Inference on video file located at bin/demo.mp4 using CPU and precision FP16
+```
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP16/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP16/gaze-estimation-adas-0002 -vf 1
+```
+
+
+
 
 ## Documentation
 Command line arguments

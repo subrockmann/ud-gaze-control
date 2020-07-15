@@ -249,7 +249,7 @@ def main():
 
             # Run face detection
             face_crop, face_coords = fdm.predict(frame.copy())
-            #print("Face crop shape: " + str(face_crop.shape))
+            print("Face crop shape: " + str(face_crop.shape))
             frame_h, frame_w = frame.shape[:2]
             (xmin, ymin, xmax, ymax) = face_coords
             face_frame = frame[ymin:ymax, xmin:xmax]
