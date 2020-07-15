@@ -66,9 +66,13 @@ python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-
 
 * Inference on video file located at bin/demo.mp4 using CPU and precision FP16
 ```
-python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP16/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP16/gaze-estimation-adas-0002 -vf 1
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP16/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP16/gaze-estimation-adas-0002 -vf 1 -s 1
 ```
 
+* Inference on video file located at bin/demo.mp4 using CPU and precision FP16-INT8
+```
+python3 src/main.py -i bin/demo.mp4 -fd models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001 -hp models/intel/head-pose-estimation-adas-0001/FP16-INT8/head-pose-estimation-adas-0001 -fl models/intel/landmarks-regression-retail-0009/FP16-INT8/landmarks-regression-retail-0009 -ge models/intel/gaze-estimation-adas-0002/FP16-INT8/gaze-estimation-adas-0002 -vf 1 -s 1
+```
 
 
 
@@ -88,19 +92,92 @@ Command line arguments
 | -s    | optional | 0 | Flag for providing performance statistics|
 
 
+## File structure
+```
+    ./bin
+        ./demo.mp4 - demo video for inference
+
+    ./models/intel - models directory
+
+    ./src/  - source code of the project
+
+        ./facial_landmarks_detection.py - code for handling the facial landmark detection model
+
+        ./head_pose_estimation.py -code for handling the head pose estimation model
+
+        ./input_feeder.py - code to load inputs from video or camera 
+
+        ./mouse_controller.py - code to move the mouse based on the output from the gaze estimation model
+
+        ./face_detection.py  - code for handling the face detection model
+
+        ./gaze_estimation.py - code for handling the gaze estimation model
+
+        ./main.py - main file for running the project
+
+    ./venv/ - folder that contains the virtual environment 
+
+    ./example.log - log file for statistics and debugging
+
+    .requirements.txt - contains python packages required for running the application
+
+    ./README.md  - project description
+```
+
 ## Benchmarks
-*TODO:* Include the benchmark results of running your model on multiple hardwares and multiple model precisions. Your benchmarks can include: model loading time, input/output processing time, model inference time etc.
+
+### model sizes depending on model precision
+
+**face-detection-adas-binary-0001**
+
+| precision         | size of model |
+|--------------|---------------|
+|  FP32-INT1   |  1.86 MB        |
+
+**head-pose-estimation-adas-0001**
+
+| precision         | size of model |
+|--------------|---------------|
+|  FP16   |  3.69 MB       |
+|  FP16-INT8   |  2.05 MB        |
+|  FP32   |  7.34 MB       |
+
+**landmarks-regression-retail-0009**
+
+| precision         | size of model |
+|--------------|---------------|
+|  FP16   |  413 KB      |
+|  FP16-INT8   | 314 KB        |
+|  FP32   |  786 KB       |
+
+**gaze-estimation-adas-0002**
+
+| precision         | size of model |
+|--------------|---------------|
+|  FP16   |  3.65 MB       |
+|  FP16-INT8   |  2.05 MB      |
+|  FP32   |   7.24 MB       |
+
+### model loading times depending on model precision
+
+| model    | precision           | loading time in s | 
+| ------------- |:-------------:|:-----:|
+| face-detection-adas-binary-0001| FP32-INT1 | 0.1897 |
+| head-pose-estimation-adas-0001| FP32 | 0.0811 |
+| head-pose-estimation-adas-0001| FP16 | 0.1377 |
+| head-pose-estimation-adas-0001| FP16-INT8 | 0.3664 |
+| landmarks-regression-retail-0009| FP32 | 0.0836 |
+| landmarks-regression-retail-0009| FP16 | 0.0896 |
+| landmarks-regression-retail-0009| FP16-INT8 | 0.1266 |
+| gaze-estimation-adas-0002| FP32 | 0.1276 |
+| gaze-estimation-adas-0002| FP16 | 0.1672 |
+| gaze-estimation-adas-0002| FP16-INT8 | 0.4030 |
+
 
 ## Results
-*TODO:* Discuss the benchmark results and explain why you are getting the results you are getting. For instance, explain why there is difference in inference time for FP32, FP16 and INT8 models.
-
-## Stand Out Suggestions
-This is where you can provide information about the stand out suggestions that you have attempted.
-
-### Async Inference
-If you have used Async Inference in your code, benchmark the results and explain its effects on power and performance of your project.
+I was surprised that the loading times for the smaller FP-16 and Fp16-INT8 models where higher than for the larger FP32 models. Apparently Intel CPUs are calculating on 32 bits and casting all the lower precision numbers to 32 bits. There is also no significant inference time difference (average inference time on all precisions is about 0.036 s). Therefore the different model precisions will only be important when running inference on other devices.
 
 ### Edge Cases
-Limitations: Currently the model pipeline will only work with one detected face, all additional faces in the frame will be ignored.
+There will be certain situations that will break your inference flow. For instance, lighting changes or multiple people in the frame. 
 <br>
-There will be certain situations that will break your inference flow. For instance, lighting changes or multiple people in the frame. Explain some of the edge cases you encountered in your project and how you solved them to make your project more robust.
+Limitations: Currently the model pipeline will only work with one detected face, all additional faces in the frame will be ignored.

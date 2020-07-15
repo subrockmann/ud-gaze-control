@@ -208,23 +208,47 @@ def main():
     if args.stats== 1:
         print("Running statistics...")
         inference_times = []
+        fdm_inference_times = []
+        hpm_inference_times = []
+        flm_inference_times = []
+        gem_inference_times = []
         start_time = time.time()
 
     # Create instances of the different models
     fdm = FaceDetector(args.facedetectionmodel, args.device, args.cpu_extension)
-    fdm.load_model()
+    if args.stats== 1:
+        start_time = time.time()
+        fdm.load_model()
+        fdm_load_time = time.time()- start_time
+    else:
+        fdm.load_model()       
     fdm.check_model()
 
     hpm = HeadPoseEstimator(args.headposemodel, args.device, args.cpu_extension)
-    hpm.load_model()
+    if args.stats== 1:
+        start_time = time.time()
+        hpm.load_model()
+        hpm_load_time = time.time()- start_time    
+    else:
+        hpm.load_model()
     hpm.check_model()
 
     flm = FacialLandmarksDetector(args.faciallandmarksmodel, args.device, args.cpu_extension)
-    flm.load_model()
+    if args.stats== 1:
+        start_time = time.time()
+        flm.load_model()
+        flm_load_time = time.time()- start_time  
+    else:
+        flm.load_model()
     flm.check_model()
 
     gem = GazeEstimator(args.gazeestimationmodel, args.device, args.cpu_extension)
-    gem.load_model()
+    if args.stats== 1:
+        start_time = time.time()
+        gem.load_model()
+        gem_load_time = time.time()- start_time  
+    else:
+        gem.load_model()
     gem.check_model()
 
     if args.stats==1:
@@ -350,6 +374,10 @@ def main():
         avg_inference_time = sum(inference_times)/len(inference_times)
         print("Average inference time: " + str(avg_inference_time))
         log.info("Average inference time: " + str(avg_inference_time))
+        log.info("Load time for face detection model: " + str(fdm_load_time))
+        log.info("Load time for facial landmarks model: " + str(flm_load_time))
+        log.info("Load time for head pose detection model: " + str(hpm_load_time))
+        log.info("Load time for gaze estimation model: " + str(gem_load_time))
     cv2.destroyAllWindows()
     feed.close()
 

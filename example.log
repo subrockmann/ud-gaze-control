@@ -1,0 +1,39 @@
+INFO:root:Video source: bin/demo.mp4
+INFO:root:InputFeeder initialized
+INFO:root:Device: CPU
+INFO:root:Face detection model: models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001
+INFO:root:Facial landmarks model: models/intel/landmarks-regression-retail-0009/FP32/landmarks-regression-retail-0009
+INFO:root:Head pose estimation model: models/intel/head-pose-estimation-adas-0001/FP32/head-pose-estimation-adas-0001
+INFO:root:Gaze estimation model: models/intel/gaze-estimation-adas-0002/FP32/gaze-estimation-adas-0002
+INFO:root:Duration for loading and checking the models: 0.17238426208496094
+INFO:root:Average inference time: 0.03591108322143555
+INFO:root:Load time for face detection model: 0.18970394134521484
+INFO:root:Load time for facial landmarks model: 0.08360505104064941
+INFO:root:Load time for head pose detection model: 0.08112668991088867
+INFO:root:Load time for gaze estimation model: 0.12761712074279785
+INFO:root:Video source: bin/demo.mp4
+INFO:root:InputFeeder initialized
+INFO:root:Device: CPU
+INFO:root:Face detection model: models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001
+INFO:root:Facial landmarks model: models/intel/landmarks-regression-retail-0009/FP16/landmarks-regression-retail-0009
+INFO:root:Head pose estimation model: models/intel/head-pose-estimation-adas-0001/FP16/head-pose-estimation-adas-0001
+INFO:root:Gaze estimation model: models/intel/gaze-estimation-adas-0002/FP16/gaze-estimation-adas-0002
+INFO:root:Duration for loading and checking the models: 0.21010303497314453
+INFO:root:Average inference time: 0.03553645085480254
+INFO:root:Load time for face detection model: 0.18514561653137207
+INFO:root:Load time for facial landmarks model: 0.08959174156188965
+INFO:root:Load time for head pose detection model: 0.13773798942565918
+INFO:root:Load time for gaze estimation model: 0.1672205924987793
+INFO:root:Video source: bin/demo.mp4
+INFO:root:InputFeeder initialized
+INFO:root:Device: CPU
+INFO:root:Face detection model: models/intel/face-detection-adas-binary-0001/FP32-INT1/face-detection-adas-binary-0001
+INFO:root:Facial landmarks model: models/intel/landmarks-regression-retail-0009/FP16-INT8/landmarks-regression-retail-0009
+INFO:root:Head pose estimation model: models/intel/head-pose-estimation-adas-0001/FP16-INT8/head-pose-estimation-adas-0001
+INFO:root:Gaze estimation model: models/intel/gaze-estimation-adas-0002/FP16-INT8/gaze-estimation-adas-0002
+INFO:root:Duration for loading and checking the models: 0.5461277961730957
+INFO:root:Average inference time: 0.03534345707650912
+INFO:root:Load time for face detection model: 0.17269587516784668
+INFO:root:Load time for facial landmarks model: 0.12662172317504883
+INFO:root:Load time for head pose detection model: 0.36643099784851074
+INFO:root:Load time for gaze estimation model: 0.40297770500183105
