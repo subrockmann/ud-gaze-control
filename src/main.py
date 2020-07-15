@@ -20,6 +20,7 @@ from facial_landmarks_detection import FacialLandmarksDetector
 from gaze_estimation import GazeEstimator
 
 
+
 def get_args():
     '''
     Gets the arguments from the command line.
@@ -87,7 +88,7 @@ def get_args():
     parser.add_argument("-s", "--stats",
         required = False,
         type = str,
-        default = 1,
+        default = 0,
         help = "Provide performance statistics, default = 0"
         )
 
@@ -173,6 +174,8 @@ def get_mouse_vector(gaze_vector, roll):
 def main():
     args = get_args()
 
+    log.basicConfig(filename='example.log',level=log.DEBUG)
+
     inputFile = args.input
     #inputFile = "./bin/demo.mp4"
 
@@ -182,22 +185,31 @@ def main():
     focal_length = 950.0
     scale = 50
 
-    print(f"Visual flag: {args.visual_flag}")
+    #print(f"Visual flag: {args.visual_flag}")
+
     if inputFile.lower() == "cam":
         feed = InputFeeder('cam')
+        log.info("Video source: "+ str(inputFile))
 
     else:
         if not os.path.isfile(inputFile):
             log.error("Unable to find file: "+ inputFile)
             exit(1)
         feed = InputFeeder("video", inputFile)
+        log.info("Video source: "+ str(inputFile))
         log.info("InputFeeder initialized")
     
+    log.info("Device: " + str(args.device))
+    log.info("Face detection model: " + str(args.facedetectionmodel))
+    log.info("Facial landmarks model: " + str(args.faciallandmarksmodel))
+    log.info("Head pose estimation model: " + str(args.headposemodel))
+    log.info("Gaze estimation model: " + str(args.gazeestimationmodel))
+
     if args.stats== 1:
         print("Running statistics...")
+        inference_times = []
         start_time = time.time()
 
-    #print(args.facedetectionmodel)
     # Create instances of the different models
     fdm = FaceDetector(args.facedetectionmodel, args.device, args.cpu_extension)
     fdm.load_model()
@@ -218,6 +230,7 @@ def main():
     if args.stats== 1:
         duration_loading = time.time() - start_time
         print(f"Duration for loading and checking the models: {duration_loading}")
+        log.info(f"Duration for loading and checking the models: {duration_loading}")
 
     cv2.namedWindow('preview',cv2.WINDOW_NORMAL)
     cv2.resizeWindow('preview', 600,600)
@@ -230,6 +243,9 @@ def main():
         if frame is not None:
             frame_count += 1
             key = cv2.waitKey(60)
+
+        if args.stats== 1:
+            start_time = time.time()
 
             # Run face detection
             face_crop, face_coords = fdm.predict(frame.copy())
@@ -250,7 +266,7 @@ def main():
 
                 # Facial landmark detection
                 left_eye_crop, right_eye_crop, landmarks, crop_coords = flm.predict(face_crop.copy())
-                print("Landmarks" +str(landmarks))
+                #print("Landmarks" +str(landmarks))
                 left_eye = (landmarks[0],landmarks[1])
                 right_eye = (landmarks[2],landmarks[3])
 
@@ -286,11 +302,16 @@ def main():
                 
                 # Send inputs to GazeEstimator
                 gaze_vector = gem.predict(head_pose, left_eye_crop, right_eye_crop)
-                #print(gaze_vector)
+
+                if args.stats== 1:
+                    inference_time = time.time() - start_time
+                    inference_times.append(inference_time)
+
+                print(gaze_vector)
                 frame = display_gaze(frame, gaze_vector)
 
                 # Control the mouse
-                if frame_count % 2 == 0:
+                if frame_count % 5 == 0:
                     mouse_x, mouse_y = get_mouse_vector(gaze_vector, roll)
                     print("Mouse vector:" + str(mouse_x) + " - " + str(mouse_y))
                     mouse.move(mouse_x, mouse_y)
@@ -325,6 +346,9 @@ def main():
                 log.error("Unable to predict using model" + str(e) + " for frame " + str(frame_count))
             continue
 
+    if args.stats== 1:
+        avg_inference_time = sum(inference_times)/len(inference_times)
+        log.info("Average inference time: " + str(avg_inference_time))
     cv2.destroyAllWindows()
     feed.close()
 
